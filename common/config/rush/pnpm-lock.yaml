@@ -5877,9 +5877,15 @@ importers:
       '@hcengineering/model-core':
         specifier: workspace:^0.7.0
         version: link:../core
+      '@hcengineering/model-view':
+        specifier: workspace:^0.7.0
+        version: link:../view
       '@hcengineering/platform':
         specifier: workspace:^0.7.19
         version: link:../../foundations/core/packages/platform
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/setting
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -13358,6 +13364,9 @@ importers:
       '@hcengineering/activity':
         specifier: workspace:^0.7.0
         version: link:../../plugins/activity
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../../plugins/ai-bot
       '@hcengineering/chunter':
         specifier: workspace:^0.7.0
         version: link:../../plugins/chunter
@@ -15730,6 +15739,9 @@ importers:
       '@hcengineering/server-core':
         specifier: workspace:^0.7.18
         version: link:../../foundations/server/packages/core
+      '@hcengineering/ui':
+        specifier: workspace:^0.7.0
+        version: link:../../packages/ui
       '@hcengineering/view':
         specifier: workspace:^0.7.0
         version: link:../view
@@ -15806,6 +15818,12 @@ importers:
       '@hcengineering/presentation':
         specifier: workspace:^0.7.0
         version: link:../../packages/presentation
+      '@hcengineering/setting':
+        specifier: workspace:^0.7.0
+        version: link:../setting
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../tracker
       '@hcengineering/ui':
         specifier: workspace:^0.7.0
         version: link:../../packages/ui
@@ -37367,6 +37385,12 @@ importers:
       '@hcengineering/setting':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/setting
+      '@hcengineering/task':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/task
+      '@hcengineering/telegram':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/telegram
       '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/text
@@ -37376,6 +37400,9 @@ importers:
       '@hcengineering/text-markdown':
         specifier: workspace:^0.7.20
         version: link:../../../foundations/core/packages/text-markdown
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/tracker
       '@hcengineering/workbench':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/workbench
@@ -41073,6 +41100,9 @@ importers:
       '@hcengineering/activity':
         specifier: workspace:^0.7.0
         version: link:../../../plugins/activity
+      '@hcengineering/ai-bot':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/ai-bot
       '@hcengineering/analytics':
         specifier: workspace:^0.7.17
         version: link:../../../foundations/core/packages/analytics
@@ -41139,6 +41169,9 @@ importers:
       '@hcengineering/text':
         specifier: workspace:^0.7.18
         version: link:../../../foundations/core/packages/text
+      '@hcengineering/tracker':
+        specifier: workspace:^0.7.0
+        version: link:../../../plugins/tracker
       '@telegraf/entity':
         specifier: ^0.5.0
         version: 0.5.0

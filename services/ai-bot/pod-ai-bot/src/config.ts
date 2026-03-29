@@ -42,6 +42,13 @@ interface Config {
   DeepgramApiKey: string
   DeepgramProjectId: string
   DeepgramTag: string
+  MissionExecutorTimeoutMs: number
+  MissionOutputMaxBytes: number
+  MissionAllowedEnvPrefixes: string
+  MissionCodexCommand: string
+  MissionCursorCommand: string
+  MissionContextDescMaxChars: number
+  MissionContextMaxTasks: number
 }
 
 const parseNumber = (str: string | undefined): number | undefined => (str !== undefined ? Number(str) : undefined)
@@ -73,7 +80,15 @@ const config: Config = (() => {
     DeepgramPollIntervalMinutes: parseNumber(process.env.DEEPGRAM_POLL_INTERVAL_MINUTES) ?? 60,
     DeepgramApiKey: process.env.DEEPGRAM_API_KEY ?? '',
     DeepgramProjectId: process.env.DEEPGRAM_PROJECT_ID ?? '',
-    DeepgramTag: process.env.DEEPGRAM_TAG ?? ''
+    DeepgramTag: process.env.DEEPGRAM_TAG ?? '',
+    MissionExecutorTimeoutMs: parseNumber(process.env.MISSION_EXECUTOR_TIMEOUT_MS) ?? 120_000,
+    MissionOutputMaxBytes: parseNumber(process.env.MISSION_OUTPUT_MAX_BYTES) ?? 256_000,
+    MissionAllowedEnvPrefixes: process.env.MISSION_ALLOWED_ENV_PREFIXES ?? 'MISSION_,AGENT_',
+    // Override with real `codex` / `cursor-agent` binaries in production; `cat` echoes stdin for local demo.
+    MissionCodexCommand: process.env.MISSION_CODEX_COMMAND ?? 'cat',
+    MissionCursorCommand: process.env.MISSION_CURSOR_COMMAND ?? 'cat',
+    MissionContextDescMaxChars: parseNumber(process.env.MISSION_CONTEXT_DESC_MAX_CHARS) ?? 500,
+    MissionContextMaxTasks: parseNumber(process.env.MISSION_CONTEXT_MAX_TASKS) ?? 20
   }
 
   const missingEnv = (Object.keys(params) as Array<keyof Config>).filter((key) => params[key] === undefined)

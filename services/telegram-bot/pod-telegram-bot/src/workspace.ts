@@ -38,6 +38,8 @@ import { createRestClient, RestClient } from '@hcengineering/api-client'
 import { isEmptyMarkup } from '@hcengineering/text'
 import { generateToken } from '@hcengineering/server-token'
 
+import tracker, { type Issue, type Project } from '@hcengineering/tracker'
+
 import { ChannelRecord, MessageRecord, PlatformFileInfo, TelegramFileInfo } from './types'
 
 export class WorkspaceClient {
@@ -256,6 +258,14 @@ export class WorkspaceClient {
       }
     }
     return res
+  }
+
+  async findProjects (): Promise<Project[]> {
+    return await this.client.findAll(tracker.class.Project, {})
+  }
+
+  async findIssuesInProject (projectId: Ref<Project>): Promise<Issue[]> {
+    return await this.client.findAll(tracker.class.Issue, { space: projectId })
   }
 
   async getChannels (account: AccountUuid, onlyStarred: boolean): Promise<ChunterSpace[]> {

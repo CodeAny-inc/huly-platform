@@ -1,5 +1,5 @@
 //
-// Copyright © 2024 Anticrm Platform Contributors.
+// Copyright © 2024 Hardcore Engineering Inc.
 //
 // Licensed under the Eclipse Public License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License. You may
@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
 import aiBot, { aiBotId } from '@hcengineering/ai-bot'
+import { mergeIds } from '@hcengineering/platform'
 
 export default mergeIds(aiBotId, aiBot, {})

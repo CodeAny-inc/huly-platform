@@ -29,13 +29,17 @@ import {
 } from '../account'
 import { WorkspaceUuid } from '@hcengineering/core'
 
+import { runMissionFromTelegram } from './mission'
+import { parseMissionCommand } from './missionParse'
+
 export enum Command {
   Start = 'start',
   Connect = 'connect',
   SyncAllChannels = 'sync_all_channels',
   SyncStarredChannels = 'sync_starred_channels',
   Help = 'help',
-  Stop = 'stop'
+  Stop = 'stop',
+  Mission = 'mission'
 }
 
 export async function getBotCommands (lang: string = 'en'): Promise<BotCommand[]> {
@@ -63,6 +67,10 @@ export async function getBotCommands (lang: string = 'en'): Promise<BotCommand[]
     {
       command: Command.Stop,
       description: await translate(telegram.string.TurnNotificationsOff, { app: config.App }, lang)
+    },
+    {
+      command: Command.Mission,
+      description: 'Run an Agent Mission (read-only analysis)'
     }
   ]
 }
@@ -142,6 +150,75 @@ async function onSyncChannels (ctx: Context, worker: PlatformWorker, onlyStarred
   await ctx.reply('List of channels updated')
 }
 
+async function onMission (ctx: Context, worker: PlatformWorker): Promise<void> {
+  const text = ctx.message !== undefined && 'text' in ctx.message ? ctx.message.text : ''
+  const parsed = parseMissionCommand(text)
+  if ('error' in parsed) {
+    await ctx.reply(parsed.error)
+    return
+  }
+
+  const id = ctx.from?.id
+  if (id === undefined) return
+
+  const integrations = (await listIntegrationsByTelegramId(id)).filter((it) => it.data?.disabled !== true)
+  if (integrations.length === 0) {
+    await ctx.reply('Connect Telegram to Huly first (/connect).')
+    return
+  }
+
+  let workspace: WorkspaceUuid | undefined
+  let account = integrations[0].account
+
+  if (integrations.length === 1) {
+    workspace = integrations[0].workspaceUuid
+  } else {
+    const w = parsed.workspace?.trim().toLowerCase()
+    if (w === undefined || w.length === 0) {
+      await ctx.reply(
+        'Multiple workspaces are linked. Add workspace=<workspaceUuid> to your command (copy from Huly workspace settings).'
+      )
+      return
+    }
+    const hit = integrations.find(
+      (it) =>
+        String(it.workspaceUuid).toLowerCase() === w ||
+        String(it.workspaceUuid).toLowerCase().startsWith(w) ||
+        w === String(it.workspaceUuid).toLowerCase().slice(0, 8)
+    )
+    if (hit === undefined) {
+      await ctx.reply('Could not resolve workspace= to one of your linked workspaces.')
+      return
+    }
+    workspace = hit.workspaceUuid
+    account = hit.account
+  }
+
+  if (workspace === undefined) {
+    await ctx.reply('Workspace resolution failed.')
+    return
+  }
+
+  const chatId = ctx.chat?.id
+  const msgId = ctx.message?.message_id
+  const sourceRef = chatId !== undefined && msgId !== undefined ? `${chatId}:${msgId}` : ''
+
+  const result = await runMissionFromTelegram({
+    ctx: worker.ctx,
+    storage: worker.getStorageAdapter(),
+    workspace,
+    account,
+    parsed,
+    sourceRef
+  })
+
+  if (result.ok) {
+    await ctx.reply(`Mission completed.\n\n${result.summary}`)
+  } else {
+    await ctx.reply(`Mission failed: ${result.error}`)
+  }
+}
+
 async function onConnect (ctx: Context, worker: PlatformWorker): Promise<void> {
   const id = ctx.from?.id
   const lang = ctx.from?.language_code ?? 'en'
@@ -178,4 +255,5 @@ export async function defineCommands (bot: Telegraf<TgContext>, worker: Platform
   bot.command(Command.Connect, (ctx) => onConnect(ctx, worker))
   bot.command(Command.SyncAllChannels, (ctx) => onSyncChannels(ctx, worker, false))
   bot.command(Command.SyncStarredChannels, (ctx) => onSyncChannels(ctx, worker, true))
+  bot.command(Command.Mission, (ctx) => onMission(ctx, worker))
 }

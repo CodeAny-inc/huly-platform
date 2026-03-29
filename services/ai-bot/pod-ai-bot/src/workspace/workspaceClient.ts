@@ -52,6 +52,7 @@ import core, {
 } from '@hcengineering/core'
 import { Room } from '@hcengineering/love'
 import { WorkspaceInfoRecord } from '@hcengineering/server-ai-bot'
+import tracker, { Issue, type Project } from '@hcengineering/tracker'
 import fs from 'fs'
 import { WithId } from 'mongodb'
 import OpenAI from 'openai'
@@ -392,6 +393,34 @@ export class WorkspaceClient {
       }
     }
     await op.commit()
+  }
+
+  /** Posts mission markdown as a chat comment on the target issue (task / first task in scope). */
+  async postMissionResultMarkdown (params: {
+    projectId: Ref<Project>
+    postToIssueId: Ref<Issue>
+    markdown: string
+    missionId: string
+  }): Promise<void> {
+    const op = await this.opClient
+    const issue = await op.findOne(tracker.class.Issue, { _id: params.postToIssueId, space: params.projectId })
+    if (issue === undefined) {
+      return
+    }
+
+    const header = `**Agent mission** (\`${params.missionId}\`)\n\n`
+    const parseResponse = jsonToMarkup(markdownToMarkup(header + params.markdown, { refUrl: '', imageUrl: '' }))
+
+    const tx = op.apply(undefined, 'AgentMissionResult')
+    await tx.addCollection<Doc, ChatMessage>(
+      chunter.class.ChatMessage,
+      issue.space,
+      issue._id,
+      tracker.class.Issue,
+      'comments',
+      { message: parseResponse }
+    )
+    await tx.commit()
   }
 
   async close (): Promise<void> {

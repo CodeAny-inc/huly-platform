@@ -13,7 +13,19 @@
 // limitations under the License.
 //
 
-import { mergeIds } from '@hcengineering/platform'
+import { type IntlString, mergeIds } from '@hcengineering/platform'
 import aiBot, { aiBotId } from '@hcengineering/ai-bot'
 
-export default mergeIds(aiBotId, aiBot, {})
+export default mergeIds(aiBotId, aiBot, {
+  string: {
+    AgentMissions: 'Agent Missions' as IntlString,
+    RunAgentMission: 'Run Agent Mission' as IntlString,
+    AgentProfiles: 'Agents' as IntlString,
+    ExecutorResources: 'Executors' as IntlString,
+    Channels: 'Channels' as IntlString,
+    TelegramConnected: 'Telegram: connected' as IntlString,
+    TelegramNotConnected: 'Telegram: not connected' as IntlString,
+    SlackPlanned: 'Slack: planned' as IntlString,
+    DiscordPlanned: 'Discord: planned' as IntlString
+  }
+})

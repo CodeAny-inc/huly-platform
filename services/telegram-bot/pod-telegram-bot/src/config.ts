@@ -14,6 +14,8 @@
 //
 
 export interface Config {
+  /** Base URL of pod-ai-bot (e.g. http://ai-bot:4010) for /missions */
+  AiBotUrl: string
   AccountsURL: string
   AccountsUrl: string
   App: string
@@ -34,6 +36,7 @@ const parseNumber = (str: string | undefined): number | undefined => (str !== un
 
 const config: Config = (() => {
   const params: Partial<Config> = {
+    AiBotUrl: process.env.AI_BOT_URL ?? '',
     Port: parseNumber(process.env.PORT) ?? 4020,
     BotToken: process.env.BOT_TOKEN,
     AccountsUrl: process.env.ACCOUNTS_URL,

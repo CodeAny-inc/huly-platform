@@ -13,6 +13,11 @@
 // limitations under the License.
 //
 
+import type {
+  AgentProfileRecord,
+  ExecutorResourceRecord,
+  MissionRecord
+} from '@hcengineering/ai-bot'
 import { ObjectId } from 'mongodb'
 import { Class, Doc, Ref, PersonUuid } from '@hcengineering/core'
 
@@ -27,3 +32,8 @@ export interface HistoryRecord {
   tokens: number
   timestamp: number
 }
+
+/** Mongo persistence for agent missions (workspace-scoped). */
+export type AgentProfileDoc = AgentProfileRecord & { _id: string }
+export type ExecutorResourceDoc = ExecutorResourceRecord & { _id: string }
+export type MissionDoc = MissionRecord & { _id: string }

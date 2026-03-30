@@ -25,6 +25,7 @@ import { DbStorage } from '../storage'
 import { AgentProfileDoc, ExecutorResourceDoc, MissionDoc } from '../types'
 import { WorkspaceClient } from '../workspace/workspaceClient'
 import { buildMissionContext, formatContextForPrompt } from './context'
+import { resolveMissionExecutor } from './executorResolve'
 import { filterExecutorEnv, runAllowlistedExecutor } from './executors'
 import { normalizeMissionMarkdown } from './output'
 import { missionError } from './types'
@@ -33,12 +34,13 @@ function now (): number {
   return Date.now()
 }
 
-function isAdminOrOwner (role: AccountRole): boolean {
-  return role === AccountRole.Owner || role === AccountRole.Admin || role === AccountRole.Maintainer
-}
-
 function canUsePrivateExecutor (ownerId: string, account: PersonUuid, role: AccountRole): boolean {
-  return account === (ownerId as PersonUuid) || isAdminOrOwner(role)
+  return (
+    account === (ownerId as PersonUuid) ||
+    role === AccountRole.Owner ||
+    role === AccountRole.Admin ||
+    role === AccountRole.Maintainer
+  )
 }
 
 export class MissionService {
@@ -213,65 +215,6 @@ export class MissionService {
     return true
   }
 
-  private resolveExecutor (
-    workspaceId: WorkspaceUuid,
-    account: PersonUuid,
-    role: AccountRole,
-    profile: AgentProfileDoc,
-    req: CreateMissionRequest,
-    allRaw: ExecutorResourceDoc[]
-  ): ExecutorResourceDoc {
-    const enabled = allRaw.filter((e) => e.workspaceId === workspaceId && e.enabled)
-
-    const tryPick = (id: string | undefined): ExecutorResourceDoc | undefined => {
-      if (id === undefined) return undefined
-      const e = enabled.find((x) => x.id === id)
-      if (e === undefined) return undefined
-      if (e.visibility === 'private' && !canUsePrivateExecutor(e.ownerId, account, role)) return undefined
-      const active = this.activeRuns.get(e.id) ?? 0
-      if (active >= e.maxConcurrentRuns) return undefined
-      return e
-    }
-
-    if (req.executorResourceId !== undefined) {
-      const e = tryPick(req.executorResourceId)
-      if (e === undefined) {
-        throw missionError('Selected executor is unavailable, disabled, busy, or not accessible', 'EXECUTOR_UNAVAILABLE')
-      }
-      return e
-    }
-
-    if (profile.defaultExecutorId !== undefined) {
-      const e = tryPick(profile.defaultExecutorId)
-      if (e !== undefined) return e
-    }
-
-    const defaultDoc =
-      profile.defaultExecutorId !== undefined ? enabled.find((x) => x.id === profile.defaultExecutorId) : undefined
-
-    const wantType: ExecutorType | undefined =
-      req.executorType ?? defaultDoc?.type
-
-    if (wantType === undefined) {
-      throw missionError(
-        'Set executorType on the request, or configure a resolvable default executor on the agent profile',
-        'NO_EXECUTOR'
-      )
-    }
-
-    for (const e of enabled) {
-      if (e.visibility !== 'shared' || e.type !== wantType) continue
-      const active = this.activeRuns.get(e.id) ?? 0
-      if (active >= e.maxConcurrentRuns) continue
-      return e
-    }
-
-    throw missionError(
-      'No available shared executor for the requested type (all busy or none configured)',
-      'NO_SHARED_EXECUTOR'
-    )
-  }
-
   async createAndRunMission (params: {
     workspaceId: WorkspaceUuid
     account: PersonUuid
@@ -294,7 +237,15 @@ export class MissionService {
     }
 
     const executors = await this.storage.listExecutorResources(workspaceId)
-    const executor = this.resolveExecutor(workspaceId, account, role, profile, req, executors)
+    const executor = resolveMissionExecutor({
+      workspaceId,
+      account,
+      role,
+      profile,
+      req,
+      allRaw: executors,
+      activeRuns: this.activeRuns
+    })
 
     const missionId = generateId()
     const t0 = now()

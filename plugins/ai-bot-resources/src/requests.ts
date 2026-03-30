@@ -13,134 +13,92 @@
 // limitations under the License.
 //
 import {
-  type ConnectMeetingRequest,
-  type DisconnectMeetingRequest,
-  type SummarizeMessagesRequest,
-  type SummarizeMessagesResponse,
-  type TranslateRequest,
-  type TranslateResponse
+  type AgentProfileRecord,
+  type ChannelStatusResponse,
+  type CreateMissionRequest,
+  type ExecutorResourceRecord,
+  type ListMissionsResponse,
+  type MissionRecord
 } from '@hcengineering/ai-bot'
-import { type Class, concatLink, type Doc, type Markup, type Ref } from '@hcengineering/core'
-import { type Room, type RoomLanguage } from '@hcengineering/love'
+import { concatLink } from '@hcengineering/core'
 import { getMetadata } from '@hcengineering/platform'
 import presentation from '@hcengineering/presentation'
 
 import aiBot from './plugin'
 
-export async function translate (text: Markup, lang: string): Promise<TranslateResponse | undefined> {
+async function aiFetch<T> (path: string, init?: RequestInit): Promise<T> {
   const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
   const token = getMetadata(presentation.metadata.Token) ?? ''
-
   if (url === '' || token === '') {
-    return undefined
+    throw new Error('AI bot endpoint or token not configured')
   }
-
-  try {
-    const req: TranslateRequest = { text, lang }
-    const resp = await fetch(concatLink(url, '/translate'), {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(req)
-    })
-    if (!resp.ok) {
-      return undefined
+  const resp = await fetch(concatLink(url, path), {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json'
     }
-
-    return (await resp.json()) as TranslateResponse
-  } catch (error) {
-    console.error(error)
-    return undefined
+  })
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}))
+    throw new Error((err as { message?: string }).message ?? resp.statusText)
   }
+  return (await resp.json()) as T
 }
 
-export async function summarizeMessages (
-  lang: string,
-  target: Ref<Doc>,
-  targetClass: Ref<Class<Doc>>
-): Promise<SummarizeMessagesResponse | undefined> {
-  const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
-  const token = getMetadata(presentation.metadata.Token) ?? ''
-
-  if (url === '' || token === '') {
-    return undefined
-  }
-
-  try {
-    const req: SummarizeMessagesRequest = {
-      target,
-      targetClass,
-      lang
-    }
-    const resp = await fetch(concatLink(url, '/summarize'), {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(req)
-    })
-    if (!resp.ok) {
-      return undefined
-    }
-
-    return (await resp.json()) as SummarizeMessagesResponse
-  } catch (error) {
-    console.error(error)
-    return undefined
-  }
+export async function listAgentProfiles (): Promise<AgentProfileRecord[]> {
+  return await aiFetch('/agent-profiles')
 }
 
-export async function connectMeeting (
-  roomId: Ref<Room>,
-  language: RoomLanguage,
-  options: Partial<ConnectMeetingRequest>
-): Promise<void> {
-  const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
-  const token = getMetadata(presentation.metadata.Token) ?? ''
-
-  if (url === '' || token === '') {
-    return undefined
-  }
-
-  try {
-    const req: ConnectMeetingRequest = { roomId, transcription: options.transcription ?? false, language }
-    await fetch(concatLink(url, 'love/connect'), {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(req)
-    })
-  } catch (error) {
-    console.error(error)
-    return undefined
-  }
+export async function createAgentProfile (
+  body: Omit<AgentProfileRecord, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt' | 'createdBy'>
+): Promise<AgentProfileRecord> {
+  return await aiFetch('/agent-profiles', { method: 'POST', body: JSON.stringify(body) })
 }
 
-export async function disconnectMeeting (roomId: Ref<Room>): Promise<void> {
-  const url = getMetadata(aiBot.metadata.EndpointURL) ?? ''
-  const token = getMetadata(presentation.metadata.Token) ?? ''
+export async function updateAgentProfile (id: string, patch: Partial<AgentProfileRecord>): Promise<AgentProfileRecord> {
+  return await aiFetch(`/agent-profiles/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(patch) })
+}
 
-  if (url === '' || token === '') {
-    return undefined
-  }
+export async function deleteAgentProfile (id: string): Promise<void> {
+  await aiFetch(`/agent-profiles/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
 
-  try {
-    const req: DisconnectMeetingRequest = { roomId }
-    await fetch(concatLink(url, 'love/disconnect'), {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(req)
-    })
-  } catch (error) {
-    console.error(error)
-    return undefined
-  }
+export async function listExecutorResources (): Promise<ExecutorResourceRecord[]> {
+  return await aiFetch('/executor-resources')
+}
+
+export async function createExecutorResource (
+  body: Omit<ExecutorResourceRecord, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt' | 'activeRuns'>
+): Promise<ExecutorResourceRecord> {
+  return await aiFetch('/executor-resources', { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function updateExecutorResource (
+  id: string,
+  patch: Partial<ExecutorResourceRecord>
+): Promise<ExecutorResourceRecord> {
+  return await aiFetch(`/executor-resources/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(patch) })
+}
+
+export async function deleteExecutorResource (id: string): Promise<void> {
+  await aiFetch(`/executor-resources/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export async function listMissions (): Promise<MissionRecord[]> {
+  const r = await aiFetch<ListMissionsResponse>('/missions')
+  return r.missions
+}
+
+export async function getMission (id: string): Promise<MissionRecord> {
+  return await aiFetch(`/missions/${encodeURIComponent(id)}`)
+}
+
+export async function createMission (body: CreateMissionRequest): Promise<MissionRecord> {
+  return await aiFetch('/missions', { method: 'POST', body: JSON.stringify(body) })
+}
+
+export async function getMissionChannelStatus (): Promise<ChannelStatusResponse> {
+  return await aiFetch('/mission-channels/status')
 }

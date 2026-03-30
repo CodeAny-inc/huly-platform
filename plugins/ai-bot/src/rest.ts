@@ -80,3 +80,96 @@ export interface IdentityResponse {
   identity: Ref<Person>
   name: string
 }
+
+/** Agent Missions MVP — shared REST DTOs (pod-ai-bot + client). */
+
+export type AgentRole = 'CEO' | 'CTO' | 'CMO' | 'CUSTOM'
+
+export type ExecutorType = 'codex-cli' | 'cursor-cli'
+
+export type ExecutorVisibility = 'private' | 'shared'
+
+export type MissionSource = 'huly-ui' | 'telegram'
+
+export type MissionStatus = 'queued' | 'running' | 'completed' | 'failed'
+
+export type MissionTargetType = 'task' | 'project' | 'bucket'
+
+export type MissionBucket = 'todo' | 'backlog'
+
+export interface MissionTargetDTO {
+  type: MissionTargetType
+  projectId?: Ref<Doc>
+  taskId?: Ref<Doc>
+  bucket?: MissionBucket
+}
+
+export interface AgentProfileRecord {
+  id: string
+  workspaceId: string
+  name: string
+  role: AgentRole
+  personaPrompt: string
+  defaultExecutorId?: string
+  defaultMissionMode: 'analysis'
+  isActive: boolean
+  createdBy: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface ExecutorResourceRecord {
+  id: string
+  workspaceId: string
+  type: ExecutorType
+  name: string
+  visibility: ExecutorVisibility
+  ownerId: string
+  enabled: boolean
+  /** Server-only mapped command id; never user-controlled. */
+  mappedCommandId: ExecutorType
+  envRef: string[]
+  maxConcurrentRuns: number
+  activeRuns?: number
+  createdAt: number
+  updatedAt: number
+}
+
+export interface MissionRecord {
+  id: string
+  workspaceId: string
+  source: MissionSource
+  sourceRef?: string
+  requestedBy: string
+  agentProfileId: string
+  executorResourceId: string
+  target: MissionTargetDTO
+  userPrompt: string
+  status: MissionStatus
+  resultSummary?: string
+  resultMarkdown?: string
+  errorMessage?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface CreateMissionRequest {
+  source: MissionSource
+  sourceRef?: string
+  agentProfileId: string
+  executorResourceId?: string
+  /** Required for shared fallback when profile has no default executor. */
+  executorType?: ExecutorType
+  target: MissionTargetDTO
+  userPrompt: string
+}
+
+export interface ListMissionsResponse {
+  missions: MissionRecord[]
+}
+
+export interface ChannelStatusResponse {
+  telegram: 'connected' | 'not_connected'
+  slack: 'planned'
+  discord: 'planned'
+}

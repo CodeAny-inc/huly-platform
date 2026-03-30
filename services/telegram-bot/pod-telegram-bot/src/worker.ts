@@ -63,7 +63,7 @@ export class PlatformWorker {
   private readonly workspaceInfoById = new Map<string, WorkspaceInfo>()
 
   private constructor (
-    readonly ctx: MeasureContext,
+    public readonly ctx: MeasureContext,
     readonly storage: StorageAdapter,
     readonly limiter: Limiter,
     private readonly db: PostgresDB
@@ -93,6 +93,10 @@ export class PlatformWorker {
     const limiter = new Limiter()
 
     return new PlatformWorker(ctx, storage, limiter, db)
+  }
+
+  getStorageAdapter (): StorageAdapter {
+    return this.storage
   }
 
   async close (): Promise<void> {

@@ -53,6 +53,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@hcengineering/ai-bot": "workspace:^0.7.0",
     "@hcengineering/activity": "workspace:^0.7.0",
     "@hcengineering/analytics": "workspace:^0.7.17",
     "@hcengineering/account-client": "workspace:^0.7.21",
@@ -76,6 +77,7 @@
     "@hcengineering/telegram": "workspace:^0.7.0",
     "@hcengineering/telegram-assets": "workspace:^0.7.0",
     "@hcengineering/text": "workspace:^0.7.18",
+    "@hcengineering/tracker": "workspace:^0.7.0",
     "@hcengineering/api-client": "workspace:^0.7.18",
     "@telegraf/entity": "^0.5.0",
     "cors": "^2.8.5",

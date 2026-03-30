@@ -27,6 +27,7 @@ import {
   TranslateResponse
 } from '@hcengineering/ai-bot'
 import core, {
+  AccountRole,
   AccountUuid,
   MeasureContext,
   PersonId,
@@ -55,6 +56,15 @@ import { tryAssignToWorkspace } from './utils/account'
 import { summarizeMessages, translateHtml } from './utils/openai'
 import { WorkspaceClient } from './workspace/workspaceClient'
 import contact, { Contact, getName, SocialIdentityRef } from '@hcengineering/contact'
+import type {
+  AgentProfileRecord,
+  ChannelStatusResponse,
+  CreateMissionRequest,
+  ExecutorResourceRecord,
+  ExecutorType,
+  MissionRecord
+} from '@hcengineering/ai-bot'
+import { MissionService } from './missions/service'
 
 const CLOSE_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 
@@ -64,6 +74,8 @@ export class AIControl {
   private readonly connectingWorkspaces = new Map<WorkspaceUuid, Promise<void>>()
 
   readonly storageAdapter: StorageAdapter
+
+  readonly missionService: MissionService
 
   private readonly openai?: OpenAI
 
@@ -93,6 +105,11 @@ export class AIControl {
         })
         : undefined
     this.storageAdapter = buildStorageFromConfig(storageConfigFromEnv())
+    this.missionService = new MissionService(
+      ctx.newChild('missions', {}, { span: false }),
+      storage,
+      async (ws) => await this.getWorkspaceClient(ws)
+    )
   }
 
   async getWorkspaceRecord (workspace: string): Promise<WorkspaceInfoRecord | undefined> {
@@ -362,6 +379,93 @@ export class AIControl {
     if (wsClient === undefined) return
 
     await wsClient.loveDisconnect(request)
+  }
+
+  async listAgentProfiles (workspace: WorkspaceUuid): Promise<AgentProfileRecord[]> {
+    return await this.missionService.listAgentProfiles(workspace)
+  }
+
+  async createAgentProfile (
+    workspace: WorkspaceUuid,
+    account: AccountUuid,
+    body: Omit<AgentProfileRecord, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt' | 'createdBy'>
+  ): Promise<AgentProfileRecord> {
+    return await this.missionService.createAgentProfile(workspace, account, body)
+  }
+
+  async updateAgentProfile (
+    workspace: WorkspaceUuid,
+    id: string,
+    patch: Partial<AgentProfileRecord>
+  ): Promise<AgentProfileRecord | undefined> {
+    return await this.missionService.updateAgentProfile(workspace, id, patch)
+  }
+
+  async deleteAgentProfile (workspace: WorkspaceUuid, id: string): Promise<boolean> {
+    return await this.missionService.deleteAgentProfile(workspace, id)
+  }
+
+  async listExecutorResources (
+    workspace: WorkspaceUuid,
+    account: AccountUuid,
+    role: AccountRole
+  ): Promise<ExecutorResourceRecord[]> {
+    return await this.missionService.listExecutorResources(workspace, account, role)
+  }
+
+  async listExecutorResourcesAdmin (workspace: WorkspaceUuid): Promise<ExecutorResourceRecord[]> {
+    return await this.missionService.listExecutorResourcesAdmin(workspace)
+  }
+
+  async createExecutorResource (
+    workspace: WorkspaceUuid,
+    account: AccountUuid,
+    body: Omit<ExecutorResourceRecord, 'id' | 'workspaceId' | 'createdAt' | 'updatedAt' | 'activeRuns' | 'mappedCommandId'> & {
+      mappedCommandId?: ExecutorType
+    }
+  ): Promise<ExecutorResourceRecord> {
+    return await this.missionService.createExecutorResource(workspace, account, body)
+  }
+
+  async updateExecutorResource (
+    workspace: WorkspaceUuid,
+    id: string,
+    account: AccountUuid,
+    role: AccountRole,
+    patch: Partial<ExecutorResourceRecord>
+  ): Promise<ExecutorResourceRecord | undefined> {
+    return await this.missionService.updateExecutorResource(workspace, id, account, role, patch)
+  }
+
+  async deleteExecutorResource (
+    workspace: WorkspaceUuid,
+    id: string,
+    account: AccountUuid,
+    role: AccountRole
+  ): Promise<boolean> {
+    return await this.missionService.deleteExecutorResource(workspace, id, account, role)
+  }
+
+  async createMission (
+    workspace: WorkspaceUuid,
+    account: AccountUuid,
+    userToken: string,
+    req: CreateMissionRequest
+  ): Promise<MissionRecord> {
+    return await this.missionService.createAndRunMission({ workspaceId: workspace, account, userToken, req })
+  }
+
+  async getMission (workspace: WorkspaceUuid, id: string): Promise<MissionRecord | undefined> {
+    return await this.missionService.getMission(workspace, id)
+  }
+
+  async listMissions (workspace: WorkspaceUuid): Promise<MissionRecord[]> {
+    return await this.missionService.listMissions(workspace)
+  }
+
+  async getMissionChannels (workspace: WorkspaceUuid): Promise<ChannelStatusResponse> {
+    const s = await this.missionService.getChannelStatus(workspace)
+    return { telegram: s.telegram, slack: 'planned', discord: 'planned' }
   }
 
   async getLoveIdentity (roomName: string): Promise<IdentityResponse | undefined> {

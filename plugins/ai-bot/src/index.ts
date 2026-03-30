@@ -14,8 +14,9 @@
 //
 
 import { buildSocialIdString, SocialIdType } from '@hcengineering/core'
-import type { Metadata, Plugin } from '@hcengineering/platform'
+import type { IntlString, Metadata, Plugin } from '@hcengineering/platform'
 import { plugin } from '@hcengineering/platform'
+import type { AnyComponent } from '@hcengineering/ui'
 
 export * from './rest'
 
@@ -30,6 +31,23 @@ export const aiBotEmailSocialKey = buildSocialIdString({
 const aiBot = plugin(aiBotId, {
   metadata: {
     EndpointURL: '' as Metadata<string>
+  },
+  component: {
+    AgentMissions: '' as AnyComponent,
+    AgentProfileForm: '' as AnyComponent,
+    ExecutorResourceForm: '' as AnyComponent,
+    RunMissionPopup: '' as AnyComponent
+  },
+  string: {
+    AgentMissions: '' as IntlString,
+    RunAgentMission: '' as IntlString,
+    AgentProfiles: '' as IntlString,
+    ExecutorResources: '' as IntlString,
+    Channels: '' as IntlString,
+    TelegramConnected: '' as IntlString,
+    TelegramNotConnected: '' as IntlString,
+    SlackPlanned: '' as IntlString,
+    DiscordPlanned: '' as IntlString
   }
 })
 

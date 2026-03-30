@@ -15,7 +15,19 @@
 
 import { type Resources } from '@hcengineering/platform'
 
+import AgentMissions from './components/settings/AgentMissions.svelte'
+import AgentProfileForm from './components/settings/AgentProfileForm.svelte'
+import ExecutorResourceForm from './components/settings/ExecutorResourceForm.svelte'
+import RunMissionPopup from './components/missions/RunMissionPopup.svelte'
+
 export * from './requests'
 export * from './utils'
 
-export default async (): Promise<Resources> => ({})
+export default async (): Promise<Resources> => ({
+  component: {
+    AgentMissions,
+    AgentProfileForm,
+    ExecutorResourceForm,
+    RunMissionPopup
+  }
+})

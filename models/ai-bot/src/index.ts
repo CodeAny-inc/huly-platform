@@ -13,12 +13,25 @@
 // limitations under the License.
 //
 
+import { AccountRole } from '@hcengineering/core'
 import { type Builder } from '@hcengineering/model'
-
+import core from '@hcengineering/model-core'
+import view from '@hcengineering/model-view'
+import setting from '@hcengineering/setting'
 import aiBot from './plugin'
 
 export { aiBotId } from '@hcengineering/ai-bot'
 export { aiBotOperation } from './migration'
 export default aiBot
 
-export function createModel (builder: Builder): void {}
+export function createModel (builder: Builder): void {
+  builder.createDoc(setting.class.WorkspaceSettingCategory, core.space.Model, {
+    name: 'agent-missions',
+    label: aiBot.string.AgentMissions,
+    icon: view.icon.Settings,
+    component: aiBot.component.AgentMissions,
+    group: 'settings-editor',
+    role: AccountRole.Maintainer,
+    order: 880
+  })
+}

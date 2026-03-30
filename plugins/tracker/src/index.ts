@@ -499,7 +499,9 @@ const pluginState = plugin(trackerId, {
     SetMilestone: '' as Ref<Action<Doc, any>>,
     SetLabels: '' as Ref<Action<Doc, any>>,
     EditRelatedTargets: '' as Ref<Action<Doc, any>>,
-    UnsetParent: '' as Ref<Action<Doc, any>>
+    UnsetParent: '' as Ref<Action<Doc, any>>,
+    RunAgentMissionOnIssue: '' as Ref<Action<Doc, any>>,
+    RunAgentMissionOnProject: '' as Ref<Action<Doc, any>>
   },
   project: {
     DefaultProject: '' as Ref<Project>

@@ -6,6 +6,9 @@ temp/
 pods/workspace/init/
 pods/workspace/init-scripts/
 
+# Local QA artifacts (screen recordings, etc.)
+qa-artifacts/
+
 # Logs
 *.log
 npm-debug.log*

@@ -25,6 +25,7 @@ import { type KeyBinding } from '@hcengineering/view'
 import tracker from './plugin'
 
 import tags from '@hcengineering/tags'
+import aiBot from '@hcengineering/ai-bot'
 import { defaultPriorities, issuePriorities } from '@hcengineering/tracker-resources/src/types'
 
 function createGotoSpecialAction (
@@ -768,5 +769,56 @@ export function createActions (builder: Builder, issuesId: string, componentsId:
       }
     },
     tracker.action.EditRelatedTargets
+  )
+
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.ShowPopup,
+      actionProps: {
+        component: aiBot.component.RunMissionPopup,
+        element: 'top',
+        fillProps: {
+          _id: 'taskId',
+          space: 'projectId'
+        }
+      },
+      label: aiBot.string.RunAgentMission,
+      icon: view.icon.Settings,
+      input: 'focus',
+      category: tracker.category.Tracker,
+      target: tracker.class.Issue,
+      context: {
+        mode: ['context', 'browser'],
+        application: tracker.app.Tracker,
+        group: 'tools'
+      }
+    },
+    tracker.action.RunAgentMissionOnIssue
+  )
+
+  createAction(
+    builder,
+    {
+      action: view.actionImpl.ShowPopup,
+      actionProps: {
+        component: aiBot.component.RunMissionPopup,
+        element: 'top',
+        fillProps: {
+          _id: 'projectId'
+        }
+      },
+      label: aiBot.string.RunAgentMission,
+      icon: view.icon.Settings,
+      input: 'focus',
+      category: tracker.category.Tracker,
+      target: tracker.class.Project,
+      context: {
+        mode: ['context', 'browser'],
+        application: tracker.app.Tracker,
+        group: 'tools'
+      }
+    },
+    tracker.action.RunAgentMissionOnProject
   )
 }
